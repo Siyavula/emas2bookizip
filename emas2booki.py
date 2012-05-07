@@ -15,7 +15,7 @@ zf = zipfile.ZipFile('booki.zip', mode='w')
 if __name__ == "__main__":
     # assuming cache_plone_images.py is one level up
     # we first run the script that creates pngs from any tikz and pstricks code
-    command = "python ../cache_plone_images.py *.cnxmlplus"
+    command = "python %s/cache_plone_images.py *.cnxmlplus"% os.path.realpath(__file__).rpartition('/')[0]
     os.system(command)
 
     # cnxmlplus -> html 
@@ -39,14 +39,6 @@ if __name__ == "__main__":
     zf.write('static')
     os.chdir(cwd)
 
-
-    #copy all die images contained in _plone_ignore_ to static
-
-    for directory, dirnames, filenames in os.walk(os.path.join('_plone_ignore_', 'cache')):
-        if 'info' not in directory:
-            for f in filenames:
-                shutil.copy2(os.path.join(directory, f), os.path.join(cwd, 'booki_temp', 'static'))
-
     # build the info.json object and convert the cnxml files to html
     infojson = {}
     infojson['version'] = 1
@@ -54,6 +46,22 @@ if __name__ == "__main__":
     infojson['spine'] = []
     infojson['TOC'] = []
     infojson['metadata'] = {}
+
+
+    #copy all die images contained in _plone_ignore_ to static
+    for directory, dirnames, filenames in os.walk(os.path.join('_plone_ignore_', 'cache')):
+        if 'info' not in directory:
+            for f in filenames:
+                shutil.copy2(os.path.join(directory, f), os.path.join(cwd, 'booki_temp', 'static'))
+                # add the image to the manifest
+                infojson['manifest'][f] = {
+                    'url': os.path.join('static',f),
+                    'mimetype': 'image/%s'%f.partition('.')[2],
+                    'contributors': ["Siyavula"],
+                    'rightsholders': ["Siyavula"],
+                    'license': ['CC-BY']}
+
+
     
     infojsonfile = open(os.path.join('booki_temp', 'info.json'), 'w')
 
@@ -86,9 +94,18 @@ if __name__ == "__main__":
 
 
 
-        # Replace the src attributes in the html with 'static/filename'
+        # Replace the <img> src attributes in the html with 'static/filename'
         htmlfile = open('output.html', 'r').read()
+        
+        # read the cnxmlfile also, we need to add the chapter title to the html file.
+        cnxmlfile = open(cnxml, 'r').read()
+        xmlroot = etree.XML(cnxmlfile)
+        chaptertitle = etree.fromstring('<h1>%s</h1>'%xmlroot.find('.//title').text)
+
         root = etree.HTML(htmlfile)
+        first_div = root.find('.//div')
+        first_div.insert(0, chaptertitle)
+        first_div.attrib['id'] = 'content'
 
         images = root.findall('.//img')
         for im in images:
