@@ -100,7 +100,7 @@ if __name__ == "__main__":
         # read the cnxmlfile also, we need to add the chapter title to the html file.
         cnxmlfile = open(cnxml, 'r').read()
         xmlroot = etree.XML(cnxmlfile)
-        chaptertitle = etree.fromstring('<h1>%s</h1>'%xmlroot.find('.//title').text)
+        chaptertitle = etree.fromstring('<h1 class="chapter-header">%s</h1>'%xmlroot.find('.//title').text)
 
         root = etree.HTML(htmlfile)
         first_div = root.find('.//div')
@@ -163,11 +163,4 @@ if __name__ == "__main__":
         zf.write(os.path.join('static', f))
     zf.close()
 
-
-         
-
-
-
-    
-             
 
