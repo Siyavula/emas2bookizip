@@ -94,7 +94,9 @@ if __name__ == "__main__":
 
 
 
+        # 
         # Replace the <img> src attributes in the html with 'static/filename'
+        #
         htmlfile = open('output.html', 'r').read()
         
         # read the cnxmlfile also, we need to add the chapter title to the html file.
@@ -117,7 +119,29 @@ if __name__ == "__main__":
                 print 'ERROR, Cannot split src attribute in html', src
             src = '/'.join(['static',tail])
             im.attrib['src'] = src
+
+        #
+        # Also find the div.example elements, they need new classes to indicate one of
+        # ['General experiment', 'Formal experiment', 'Informal experiment', 'Activity', 'Investigation', 'Group discussion', 'Case study', 'Project']
+        #
         
+        cnxlabels = [('General experiment','g_experiment'), ('Formal experiment', 'f_experiment'), ('Informal experiment', 'i_experiment'), ('Activity', 'activity'), ('Investigation', 'investigation'), ('Group discussion', 'group_discussion'), ('Case study', 'casestudy'), ('Project', 'project')]
+
+        examples = root.findall('.//div[@class="example"]/h5/span[@class="cnx_label"]')
+        for ex in examples:
+            label = ex.text
+            # see if the label is one of the special ones
+            if any([c[0] in label for c in cnxlabels]):
+                # modify the class="example" to reflect the new type
+
+                newclass = [c[1] for c in cnxlabels if c[0] in label][0]
+                print newclass
+                # get parent div element
+                div_example = ex.find('....')
+                div_example.attrib['class'] = newclass
+                print "Found Example Environment. Changing example class to ", newclass 
+
+ 
         
         htmlfile = open('output.html', 'w')
         htmlfile.write(etree.tostring(root))
